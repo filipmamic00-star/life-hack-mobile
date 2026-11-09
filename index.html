@@ -1,0 +1,180 @@
+
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090E1C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LIFEHACK">
+<title>LIFEHACK 4.0</title>
+<style>
+:root{--bg:#090e1c;--card:#17243a;--card2:#202f49;--purple:#a78bfa;--cyan:#67e8f9;--green:#5eead4;--white:#f1f5f9;--muted:#94a3b8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--white);font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;padding-bottom:95px}
+header{padding:calc(env(safe-area-inset-top) + 20px) 20px 18px;background:#111a2d;position:sticky;top:0;z-index:5}
+h1{color:var(--purple);font-size:25px;margin:0}
+header p{color:var(--muted);font-size:11px;letter-spacing:2px;margin:5px 0 0}
+main{padding:17px;max-width:650px;margin:auto}
+h2{font-size:23px;margin:5px 0}
+h3{margin:0 0 8px}
+.card{background:var(--card);border:1px solid #2b3a55;border-radius:17px;padding:17px;margin:12px 0}
+.hero{background:linear-gradient(135deg,#30264f,#17243a);padding:23px}
+.hero small{color:var(--cyan);font-weight:bold}
+.hero h2{font-size:27px;line-height:1.25;margin:13px 0}
+.muted{color:var(--muted);font-size:13px}
+.stat{font-size:25px;color:var(--green);font-weight:bold;margin-top:8px}
+label{display:block;font-size:13px;font-weight:bold;margin:14px 0 6px}
+input,select,textarea{width:100%;background:#0d1729;border:1px solid #394967;border-radius:10px;color:white;padding:14px;font-size:16px}
+button{border:0;border-radius:11px;padding:14px;background:#7048e8;color:white;font-size:14px;font-weight:bold;cursor:pointer}
+.primary{width:100%;margin-top:15px}
+.secondary{background:var(--card2)}
+.danger{background:#852d49}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#111a2d;border-top:1px solid #2b3a55;display:flex;overflow-x:auto;padding:9px 5px calc(env(safe-area-inset-bottom) + 8px);z-index:10}
+.nav button{background:transparent;color:var(--muted);min-width:75px;padding:9px 5px;font-size:11px}
+.nav button.active{color:var(--purple);background:#30264f}
+.nav span{display:block;font-size:20px;margin-bottom:4px}
+.item{background:var(--card2);border-radius:12px;padding:13px;margin:9px 0}
+.item strong{display:block;margin-bottom:5px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.hidden{display:none!important}
+canvas{width:100%;height:220px}
+.smallbtn{padding:9px;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+<h1>LIFEHACK.</h1>
+<p>ULTIMATE LIFE ASSISTANT · 4.0</p>
+</header>
+<main id="app"></main>
+<nav class="nav" id="nav"></nav>
+<script>
+const KEY="lifehack_mobile_v4";
+let records=JSON.parse(localStorage.getItem(KEY)||"[]");
+let page="Dashboard";
+const app=document.getElementById("app");
+const pages=[
+["Dashboard","⌂"],["Troškovi","💸"],["Štednja","🎯"],
+["Vrijeme","⏳"],["Kupnja","🛒"],["Povijest","◷"],["Statistika","📊"]
+];
+function save(){localStorage.setItem(KEY,JSON.stringify(records))}
+function euro(n){return Number(n).toLocaleString("hr-HR",{style:"currency",currency:"EUR"})}
+function card(title,body){return `<section class="card"><h3>${title}</h3>${body}</section>`}
+function field(id,label,placeholder,type="text"){
+return `<label>${label}</label><input id="${id}" type="${type}" placeholder="${placeholder}" ${type==="number"?'step="any"':''}>`
+}
+function val(id){return document.getElementById(id).value.trim()}
+function add(category,title,amount,details=""){
+records.unshift({id:Date.now(),category,title,amount:Number(amount),details,created:new Date().toLocaleString("hr-HR")});
+save();alert("Uspješno spremljeno!");render()
+}
+function button(text,fn){return `<button class="primary" onclick="${fn}">${text}</button>`}
+function go(p){page=p;render()}
+function nav(){
+document.getElementById("nav").innerHTML=pages.map(([p,i])=>
+`<button class="${page===p?'active':''}" onclick="go('${p}')"><span>${i}</span>${p}</button>`
+).join("");
+}
+function dashboard(){
+let total=records.filter(r=>r.category==="Trošak").reduce((s,r)=>s+r.amount,0);
+return `<section class="card hero"><small>DOBRODOŠAO U LIFEHACK 4.0</small><h2>Preuzmi kontrolu nad svojim vremenom i novcem.</h2><p class="muted">Tvoj osobni pomoćnik za svaki dan.</p></section>
+${card("TVOJA STATISTIKA",`<p class="muted">Ukupno zapisa: ${records.length}</p><div class="stat">${euro(total)}</div><p class="muted">Evidentirani troškovi</p>`)}
+${card("BRZI PRISTUP",pages.slice(1).map(([p,i])=>`<div class="item row" onclick="go('${p}')"><strong>${i} ${p}</strong><span>→</span></div>`).join(""))}
+${card("💡 PAMETNI SAVJET",`<p>${total===0?"Dodaj svoj prvi trošak i počni pratiti svoje navike.":"Do sada si evidentirao "+euro(total)+" troškova. Pregledaj povijest i pronađi gdje možeš uštedjeti."}</p>`)}`
+}
+function expenses(){
+let total=records.filter(r=>r.category==="Trošak").reduce((s,r)=>s+r.amount,0);
+return card("💸 PRAĆENJE TROŠKOVA",field("name","Naziv troška","Primjer: Kava")+field("amount","Iznos (€)","Primjer: 2.50","number")+field("details","Napomena","Opcionalno")+button("＋ SPREMI TROŠAK","expenseAdd()"))+
+card("UKUPNO EVIDENTIRANO",`<div class="stat">${euro(total)}</div>`)
+}
+function expenseAdd(){
+let n=val("name"),a=Number(val("amount"));
+if(!n||!Number.isFinite(a)||a<=0)return alert("Unesi ispravan naziv i iznos.");
+add("Trošak",n,a,val("details"))
+}
+function savings(){
+return card("🎯 PLANIRANJE ŠTEDNJE",field("goal","Ciljani iznos (€)","2000","number")+field("current","Trenutačna ušteđevina (€)","500","number")+field("days","Rok u danima","180","number")+button("IZRAČUNAJ PLAN","savingCalc()")+`<div id="result"></div>`)
+}
+function savingCalc(){
+let g=Number(val("goal")),c=Number(val("current")),d=Number(val("days"));
+if(g<=0||c<0||c>g||d<=0)return alert("Provjeri unesene vrijednosti.");
+let left=g-c;
+document.getElementById("result").innerHTML=left===0?"🎉 Cilj je ostvaren!":`<div class="item"><strong>Preostalo: ${euro(left)}</strong>Dnevno: ${euro(left/d)}<br>Tjedno: ${euro(left/d*7)}<br>Mjesečno: ${euro(left/d*30.4375)}</div>`;
+add("Štednja","Plan štednje",left,`${d} dana`)
+}
+function timePage(){
+return card("⏳ ANALIZA VREMENA",field("activity","Naziv aktivnosti","Društvene mreže")+field("hours","Sati dnevno","2","number")+field("days","Dana tjedno","7","number")+button("ANALIZIRAJ VRIJEME","timeCalc()")+`<div id="result"></div>`)
+}
+function timeCalc(){
+let n=val("activity"),h=Number(val("hours")),d=Number(val("days"));
+if(!n||h<0||h>24||d<0||d>7)return alert("Provjeri unesene podatke.");
+let w=h*d,y=w*52;
+document.getElementById("result").innerHTML=`<div class="item">Tjedno: ${w.toFixed(1)} sati<br>Godišnje: ${y.toFixed(1)} sati<br>To je ${(y/24).toFixed(1)} dana!</div>`;
+add("Vrijeme",n,y,`${h} sati dnevno; ${d} dana tjedno`)
+}
+function shopping(){
+return card("🛒 USPOREDBA PROIZVODA",field("pa","Cijena A (€)","4.50","number")+field("qa","Količina A","500","number")+field("pb","Cijena B (€)","7.00","number")+field("qb","Količina B","1000","number")+button("USPOREDI PROIZVODE","shopCalc()")+`<div id="result"></div>`)
+}
+function shopCalc(){
+let a=Number(val("pa")),x=Number(val("qa")),b=Number(val("pb")),y=Number(val("qb"));
+if(Math.min(a,x,b,y)<=0)return alert("Sve vrijednosti moraju biti veće od nule.");
+let u=a/x,v=b/y,w=u<v?"PROIZVOD A":v<u?"PROIZVOD B":"JEDNAKA CIJENA";
+document.getElementById("result").innerHTML=`<div class="item"><strong>Povoljniji: ${w}</strong>A: ${u.toFixed(5)} € po jedinici<br>B: ${v.toFixed(5)} € po jedinici</div>`;
+add("Kupnja","Usporedba proizvoda",Math.min(u,v),`A: ${u}; B: ${v}; ${w}`)
+}
+function history(){
+let q=(document.getElementById("search")?.value||"").toLowerCase();
+let rows=records.filter(r=>(r.title+r.category+r.details).toLowerCase().includes(q));
+return card("◷ POVIJEST AKTIVNOSTI",`<input id="search" placeholder="Pretraži zapise..." oninput="renderHistory()" value="${q.replaceAll('"','&quot;')}"><div id="historyRows">${rows.map(item).join("")||'<p class="muted">Nema zapisa.</p>'}</div><button class="secondary primary" onclick="exportData()">IZVEZI SIGURNOSNU KOPIJU</button><button class="secondary primary" onclick="importData()">UVEZI SIGURNOSNU KOPIJU</button><input id="backupFile" type="file" accept=".json" class="hidden" onchange="readBackup(event)">`)
+}
+function item(r){
+return `<div class="item"><div class="row"><strong>${escapeHTML(r.category)} · ${escapeHTML(r.title)}</strong><button class="danger smallbtn" onclick="removeRecord(${r.id})">Obriši</button></div>${euro(r.amount)}<p class="muted">${escapeHTML(r.created||"")}</p><p class="muted">${escapeHTML(r.details||"")}</p></div>`
+}
+function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function renderHistory(){
+let q=(document.getElementById("search")?.value||"").toLowerCase();
+let el=document.getElementById("historyRows");
+if(el)el.innerHTML=records.filter(r=>(r.title+r.category+r.details).toLowerCase().includes(q)).map(item).join("")||'<p class="muted">Nema zapisa.</p>';
+}
+function removeRecord(id){if(confirm("Obrisati ovaj zapis?")){records=records.filter(r=>r.id!==id);save();render()}}
+function exportData(){
+let blob=new Blob([JSON.stringify(records,null,2)],{type:"application/json"});
+let url=URL.createObjectURL(blob),a=document.createElement("a");
+a.href=url;a.download="lifehack-sigurnosna-kopija.json";a.click();URL.revokeObjectURL(url)
+}
+function importData(){document.getElementById("backupFile").click()}
+function readBackup(e){
+let file=e.target.files[0];if(!file)return;
+let reader=new FileReader();
+reader.onload=()=>{try{let data=JSON.parse(reader.result);if(!Array.isArray(data))throw Error();if(confirm("Uvesti kopiju? Postojeći zapisi bit će zamijenjeni.")){records=data;save();render();alert("Kopija je uvezena.")}}catch{alert("Datoteka nije valjana.")}};
+reader.readAsText(file)
+}
+function stats(){
+let rows=records.filter(r=>r.category==="Trošak");
+let total=rows.reduce((s,r)=>s+r.amount,0);
+let months={};
+rows.forEach(r=>{let key=(r.created||"").slice(3,10);months[key]=(months[key]||0)+r.amount});
+let keys=Object.keys(months).slice(-6);
+return card("📊 FINANCIJSKA SLIKA",`<div class="stat">${euro(total)}</div><p class="muted">Ukupni evidentirani troškovi</p><canvas id="chart" width="600" height="240"></canvas>`)+card("ZAPISI",rows.map(item).join("")||'<p class="muted">Još nema troškova.</p>')
+}
+function draw(){
+let c=document.getElementById("chart");if(!c)return;
+let ctx=c.getContext("2d"),rows=records.filter(r=>r.category==="Trošak"),months={};
+rows.forEach(r=>{let k=(r.created||"").slice(3,10);months[k]=(months[k]||0)+r.amount});
+let keys=Object.keys(months).slice(-6);ctx.clearRect(0,0,c.width,c.height);
+if(!keys.length){ctx.fillStyle="#94A3B8";ctx.fillText("Dodaj troškove za prikaz grafikona.",15,40);return}
+let max=Math.max(...keys.map(k=>months[k]),1);
+keys.forEach((k,i)=>{let w=55,x=25+i*95,h=155*months[k]/max;ctx.fillStyle="#A78BFA";ctx.fillRect(x,185-h,w,h);ctx.fillStyle="#F1F5F9";ctx.font="13px Arial";ctx.fillText(k.slice(0,5),x,210)})
+}
+function render(){
+nav();
+let content=page==="Dashboard"?dashboard():page==="Troškovi"?expenses():page==="Štednja"?savings():page==="Vrijeme"?timePage():page==="Kupnja"?shopping():page==="Povijest"?history():stats();
+app.innerHTML=`<h2>${page}</h2>${content}`;
+if(page==="Statistika")draw();
+}
+render();
+</script>
+</body>
+</html>
